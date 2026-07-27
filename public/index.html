@@ -883,8 +883,11 @@ $('#select-entrenar-dia').value = DIA_POR_JS_DAY[new Date().getDay()];
     renderObjetivos();
     await cargarCatalogoEjercicios();
     await cargarBloques();
-    const bloqueInicial = $('#select-plan-bloque').value;
-    await cargarPlan(bloqueInicial);
+    if (bloquesCache.length) {
+      const primerBloqueId = Math.min(...bloquesCache.map(b => b.id));
+      $('#select-plan-bloque').value = primerBloqueId;
+    }
+    await cargarPlan($('#select-plan-bloque').value);
   } catch (err) {
     showToast(err.message, true);
   }
