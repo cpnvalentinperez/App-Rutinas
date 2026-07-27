@@ -186,6 +186,16 @@ app.post('/bloques', async (req, res) => {
   }
 });
 
+app.delete('/bloques/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const [result] = (await pool.execute('DELETE FROM bloques WHERE id = ?', [id])) as any;
+  if (result.affectedRows === 0) {
+    res.status(404).json({ error: 'Bloque no encontrado' });
+    return;
+  }
+  res.json({ ok: true });
+}));
+
 // Vercel auto-detecta este archivo como entrypoint de servidor y requiere
 // que el export default sea la app/función (no alcanza con el named export).
 export default app;

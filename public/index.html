@@ -434,6 +434,22 @@ $('#toggle-bloque-form').addEventListener('click', () => {
   form.style.display = form.style.display === 'none' ? 'block' : 'none';
 });
 
+$('#lista-bloques').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-borrar-sesion');
+  if (!btn) return;
+
+  if (!confirm('¿Borrar este bloque y todas sus sesiones?')) return;
+
+  try {
+    await api(`/bloques/${btn.dataset.bloqueId}`, { method: 'DELETE' });
+    showToast('Bloque borrado');
+    await cargarBloques();
+    if (bloqueActualPlan) await cargarPlan($('#select-plan-bloque').value);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
 let bloquesCache = [];
 
 async function cargarBloques() {
@@ -450,11 +466,15 @@ async function cargarBloques() {
           <strong>${b.nombre}</strong>
           <span class="meta">${b.foco} · ${b.fecha_inicio} → ${b.fecha_fin} (${b.duracion_semanas} sem)</span>
         </div>
-        <span class="badge">#${b.id}</span>
+        <span class="sesion-info">
+          <span class="badge">#${b.id}</span>
+          <button type="button" class="btn-borrar-sesion" data-bloque-id="${b.id}" title="Borrar bloque">🗑</button>
+        </span>
       </li>`).join('')
     : '<li class="empty">Todavía no hay bloques. Creá uno con "+ Nuevo".</li>';
 
-  const opciones = bloques.map(b => `<option value="${b.id}">#${b.id} · ${b.nombre}</option>`).join('');
+  const bloquesAsc = [...bloques].sort((a, b) => a.id - b.id);
+  const opciones = bloquesAsc.map(b => `<option value="${b.id}">#${b.id} · ${b.nombre}</option>`).join('');
   select.innerHTML = opciones;
 
   const selectEntrenar = $('#select-entrenar-bloque');
