@@ -185,3 +185,7 @@ app.post('/bloques', async (req, res) => {
     res.status(400).json({ error: err.message ?? 'Error al crear el bloque' });
   }
 });
+
+// Vercel auto-detecta este archivo como entrypoint de servidor y requiere
+// que el export default sea la app/función (no alcanza con el named export).
+export default app;
