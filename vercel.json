@@ -1,6 +1,6 @@
 {
-  "outputDirectory": "public",
   "rewrites": [
+    { "source": "/", "destination": "/public/index.html" },
     { "source": "/bloques", "destination": "/api/index" },
     { "source": "/bloques/:path*", "destination": "/api/index" },
     { "source": "/sesiones", "destination": "/api/index" },
