@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rutinas Gym</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1f2330;
+    --border: #2a2f3d;
+    --text: #e8eaf0;
+    --text-dim: #9aa1b2;
+    --accent: #6ee7b7;
+    --accent-2: #7dd3fc;
+    --danger: #f87171;
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f6fa;
+      --panel: #ffffff;
+      --panel-2: #f0f1f6;
+      --border: #dde0ea;
+      --text: #1a1d29;
+      --text-dim: #5b6072;
+      --accent: #059669;
+      --accent-2: #0284c7;
+      --danger: #dc2626;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: 3rem;
+  }
+  header {
+    padding: 1.25rem 1rem 0.75rem;
+    text-align: center;
+  }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  header p { margin: 0.25rem 0 0; color: var(--text-dim); font-size: 0.85rem; }
+
+  nav.tabs {
+    max-width: 720px;
+    margin: 0.75rem auto 0;
+    padding: 0 1rem;
+    display: flex;
+    gap: 0.4rem;
+  }
+  nav.tabs button {
+    flex: 1;
+    background: var(--panel);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  nav.tabs button.active {
+    background: var(--accent-2);
+    color: #05121c;
+    border-color: var(--accent-2);
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .tab-panel { display: none; flex-direction: column; gap: 1rem; }
+  .tab-panel.active { display: flex; }
+
+  section.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  section.card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  section.card h2 button { font-size: 0.75rem; }
+
+  label { display: block; font-size: 0.8rem; color: var(--text-dim); margin: 0.5rem 0 0.25rem; }
+  input, select, textarea {
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-2); }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: var(--accent-2);
+    color: #05121c;
+  }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  button.primary { background: var(--accent); color: #05221a; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 100px; }
+
+  ul.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .item {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+  .item .meta { font-size: 0.75rem; color: var(--text-dim); }
+  .item strong { display: block; font-size: 0.9rem; }
+
+  .fase-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1.1fr 0.6fr 1fr auto;
+    gap: 0.4rem;
+    align-items: end;
+    margin-bottom: 0.5rem;
+  }
+  @media (max-width: 560px) {
+    .fase-row { grid-template-columns: 1fr 1fr; }
+    .fase-row .full { grid-column: 1 / -1; }
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem; }
+  th, td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: 600; }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .empty { color: var(--text-dim); font-size: 0.85rem; padding: 0.5rem 0; }
+
+  .dia-block { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.6rem; overflow: hidden; }
+  .dia-header {
+    background: var(--panel-2);
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .dia-header .sesion-nombre { font-weight: 400; color: var(--text-dim); font-size: 0.8rem; }
+  .dia-header .sesion-info { display: flex; align-items: center; gap: 0.5rem; }
+  .btn-borrar-sesion {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 0.1rem 0.3rem;
+    font-size: 0.8rem;
+  }
+  .btn-borrar-sesion:hover { color: var(--danger); }
+  #select-plan-bloque { text-align: center; font-weight: 600; }
+  .dia-descanso { padding: 0.5rem 0.75rem; color: var(--text-dim); font-size: 0.8rem; font-style: italic; }
+  .dia-block table { margin: 0; }
+  .dia-block td, .dia-block th { padding: 0.35rem 0.75rem; vertical-align: top; }
+  select.swap-ejercicio { width: auto; min-width: 140px; max-width: 100%; font-size: 0.8rem; padding: 0.3rem 0.4rem; }
+  .fase-cell {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: center;
+    vertical-align: middle;
+    color: var(--text-dim);
+    background: var(--panel);
+    white-space: nowrap;
+    border-right: 1px solid var(--border);
+  }
+  .ej-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem; line-height: 1.3; max-width: 320px; }
+
+  .objetivos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.75rem; }
+  .objetivo-btn {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 0.7rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-weight: 400;
+  }
+  .objetivo-btn.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .objetivo-emoji { font-size: 1.3rem; }
+  .objetivo-label { font-size: 0.85rem; font-weight: 600; }
+  .objetivo-sub { font-size: 0.7rem; color: var(--text-dim); }
+  .toast {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    max-width: 90%;
+    display: none;
+  }
+  .toast.error { color: var(--danger); border-color: var(--danger); }
+  .toast.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏋️ Rutinas Gym</h1>
+  <p>Armado de sesiones por patrón de movimiento</p>
+</header>
+
+<nav class="tabs">
+  <button class="active" data-tab="plan" type="button">📅 Plan</button>
+  <button data-tab="entrenar" type="button">🎯 Entrenar</button>
+  <button data-tab="sesion" type="button">➕ Manual</button>
+  <button data-tab="bloques" type="button">📦 Bloques</button>
+</nav>
+
+<main>
+
+<div class="tab-panel" data-panel="bloques">
+  <section class="card" id="card-bloques">
+    <h2>Bloques <button class="secondary" id="toggle-bloque-form" type="button">+ Nuevo</button></h2>
+
+    <form id="form-bloque" style="display:none; margin-bottom:0.75rem;">
+      <label>Nombre</label>
+      <input name="nombre" required maxlength="120" placeholder="Bloque 2 - Fuerza" />
+
+      <div class="row">
+        <div>
+          <label>Foco</label>
+          <select name="foco">
+            <option value="potencia">Potencia</option>
+            <option value="fuerza">Fuerza</option>
+            <option value="hipertrofia_funcional">Hipertrofia funcional</option>
+            <option value="deload">Deload</option>
+          </select>
+        </div>
+        <div>
+          <label>Fecha inicio</label>
+          <input name="fechaInicio" type="date" required />
+        </div>
+        <div>
+          <label>Semanas</label>
+          <input name="duracionSemanas" type="number" min="1" max="52" value="5" required />
+        </div>
+      </div>
+
+      <label>Notas (opcional)</label>
+      <input name="notas" maxlength="255" />
+
+      <div class="row" style="margin-top:0.75rem;">
+        <button type="submit" class="primary">Crear bloque</button>
+      </div>
+    </form>
+
+    <ul class="list" id="lista-bloques"><li class="empty">Cargando...</li></ul>
+  </section>
+</div>
+
+<div class="tab-panel" data-panel="entrenar">
+  <section class="card">
+    <h2>¿Qué querés entrenar hoy?</h2>
+
+    <label>Bloque</label>
+    <select id="select-entrenar-bloque"></select>
+
+    <label>Día</label>
+    <select id="select-entrenar-dia">
+      <option value="lunes">Lunes</option>
+      <option value="martes">Martes</option>
+      <option value="miercoles">Miércoles</option>
+      <option value="jueves">Jueves</option>
+      <option value="viernes">Viernes</option>
+      <option value="sabado">Sábado</option>
+      <option value="domingo">Domingo</option>
+    </select>
+
+    <div class="objetivos-grid" id="objetivos-grid"></div>
+    <div id="objetivo-preview" style="display:none;"></div>
+  </section>
+
+  <section class="card" id="card-resultado-entrenar" style="display:none;">
+    <h2>Sesión armada</h2>
+    <div id="resultado-entrenar"></div>
+  </section>
+</div>
+
+<div class="tab-panel" data-panel="sesion">
+  <section class="card">
+    <h2>Nueva sesión (manual)</h2>
+    <form id="form-sesion">
+      <label>Bloque</label>
+      <select name="bloqueId" id="select-bloque" required></select>
+
+      <div class="row">
+        <div>
+          <label>Día</label>
+          <select name="diaSemana">
+            <option value="lunes">Lunes</option>
+            <option value="martes">Martes</option>
+            <option value="miercoles">Miércoles</option>
+            <option value="jueves">Jueves</option>
+            <option value="viernes">Viernes</option>
+            <option value="sabado">Sábado</option>
+            <option value="domingo">Domingo</option>
+          </select>
+        </div>
+        <div>
+          <label>Duración (min)</label>
+          <input name="duracionEstimadaMin" type="number" value="40" min="10" max="180" />
+        </div>
+      </div>
+
+      <label>Nombre de la sesión (opcional)</label>
+      <input name="nombreSesion" maxlength="120" placeholder="Empuje + Potencia + Core" />
+
+      <h3 style="font-size:0.85rem; margin: 1rem 0 0.5rem; color:var(--text-dim);">Fases</h3>
+      <div id="fases-container"></div>
+      <button type="button" class="secondary" id="add-fase">+ Agregar fase</button>
+
+      <div class="row" style="margin-top:1rem;">
+        <button type="submit" class="primary">Armar sesión</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" id="card-resultado" style="display:none;">
+    <h2>Sesión armada</h2>
+    <div id="resultado"></div>
+  </section>
+</div>
+
+<div class="tab-panel active" data-panel="plan">
+  <section class="card">
+    <h2>Plan semanal</h2>
+    <label>Bloque</label>
+    <select id="select-plan-bloque"></select>
+    <div id="plan-semanal" style="margin-top:0.75rem;"></div>
+  </section>
+</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DIAS = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+const DIAS_LABEL = { lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles', jueves: 'Jueves', viernes: 'Viernes', sabado: 'Sábado', domingo: 'Domingo' };
+const FASES = ['activacion', 'potencia', 'fuerza', 'accesorios', 'core', 'finisher'];
+const PATRONES = ['empuje', 'tiron', 'rodilla', 'cadera', 'core', 'rotacion', 'potencia', 'aceleracion', 'desaceleracion', 'estabilidad', 'movilidad'];
+const METODOS = ['tradicional', 'superserie', 'circuito', 'emom', 'amrap', 'contraste', 'complejo'];
+
+const $ = (sel) => document.querySelector(sel);
+const toast = $('#toast');
+
+function showToast(msg, isError) {
+  toast.textContent = msg;
+  toast.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  return data;
+}
+
+function optionsHtml(values, labels) {
+  return values.map((v, i) => `<option value="${v}">${labels ? labels[i] : v}</option>`).join('');
+}
+
+// ── Fases dinámicas ──────────────────────────────────
+
+function crearFilaFase() {
+  const div = document.createElement('div');
+  div.className = 'fase-row';
+  div.innerHTML = `
+    <select class="fase-fase">${optionsHtml(FASES)}</select>
+    <select class="fase-patron">${optionsHtml(PATRONES)}</select>
+    <input class="fase-cantidad" type="number" min="1" max="6" value="1" />
+    <select class="fase-metodo">${optionsHtml(METODOS)}</select>
+    <button type="button" class="danger fase-quitar">✕</button>
+  `;
+  div.querySelector('.fase-quitar').addEventListener('click', () => div.remove());
+  return div;
+}
+
+$('#add-fase').addEventListener('click', () => {
+  $('#fases-container').appendChild(crearFilaFase());
+});
+
+// arranca con 2 fases por defecto
+$('#fases-container').appendChild(crearFilaFase());
+$('#fases-container').appendChild(crearFilaFase());
+
+// ── Bloques ──────────────────────────────────────────
+
+$('#toggle-bloque-form').addEventListener('click', () => {
+  const form = $('#form-bloque');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+});
+
+let bloquesCache = [];
+
+async function cargarBloques() {
+  const bloques = await api('/bloques');
+  bloquesCache = bloques;
+  const lista = $('#lista-bloques');
+  const select = $('#select-bloque');
+  const selectPlan = $('#select-plan-bloque');
+
+  lista.innerHTML = bloques.length
+    ? bloques.map(b => `
+      <li class="item">
+        <div>
+          <strong>${b.nombre}</strong>
+          <span class="meta">${b.foco} · ${b.fecha_inicio} → ${b.fecha_fin} (${b.duracion_semanas} sem)</span>
+        </div>
+        <span class="badge">#${b.id}</span>
+      </li>`).join('')
+    : '<li class="empty">Todavía no hay bloques. Creá uno con "+ Nuevo".</li>';
+
+  const opciones = bloques.map(b => `<option value="${b.id}">#${b.id} · ${b.nombre}</option>`).join('');
+  select.innerHTML = opciones;
+
+  const selectEntrenar = $('#select-entrenar-bloque');
+  const valorPrevioEntrenar = selectEntrenar.value;
+  selectEntrenar.innerHTML = opciones;
+  if (valorPrevioEntrenar && bloques.some(b => String(b.id) === valorPrevioEntrenar)) {
+    selectEntrenar.value = valorPrevioEntrenar;
+  }
+
+  const valorPrevio = selectPlan.value;
+  selectPlan.innerHTML = opciones;
+  if (valorPrevio && bloques.some(b => String(b.id) === valorPrevio)) {
+    selectPlan.value = valorPrevio;
+  }
+}
+
+$('#form-bloque').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    await api('/bloques', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: fd.get('nombre'),
+        foco: fd.get('foco'),
+        fechaInicio: fd.get('fechaInicio'),
+        duracionSemanas: Number(fd.get('duracionSemanas')),
+        notas: fd.get('notas') || undefined,
+      }),
+    });
+    showToast('Bloque creado');
+    e.target.reset();
+    e.target.style.display = 'none';
+    await cargarBloques();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+// ── Nueva sesión ─────────────────────────────────────
+
+$('#form-sesion').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+
+  const fases = [...document.querySelectorAll('.fase-row')].map(row => ({
+    fase: row.querySelector('.fase-fase').value,
+    patron: row.querySelector('.fase-patron').value,
+    cantidad: Number(row.querySelector('.fase-cantidad').value),
+    metodo: row.querySelector('.fase-metodo').value,
+  }));
+
+  if (fases.length === 0) {
+    showToast('Agregá al menos una fase', true);
+    return;
+  }
+
+  const bloqueId = Number(fd.get('bloqueId'));
+
+  try {
+    const { sesionId } = await api('/sesiones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bloqueId,
+        diaSemana: fd.get('diaSemana'),
+        nombreSesion: fd.get('nombreSesion') || undefined,
+        duracionEstimadaMin: Number(fd.get('duracionEstimadaMin')),
+        fases,
+      }),
+    });
+    showToast(`Sesión #${sesionId} armada`);
+    await mostrarSesion(sesionId);
+    $('#select-plan-bloque').value = bloqueId;
+    await cargarPlan(bloqueId);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+// ── Resultado / detalle de sesión ───────────────────
+
+let sesionActualResultado = null;
+
+async function mostrarSesion(id) {
+  sesionActualResultado = id;
+  const sesion = await api(`/sesiones/${id}`);
+  const card = $('#card-resultado');
+  card.style.display = 'block';
+
+  $('#resultado').innerHTML = `
+    <p><strong>${sesion.nombre || '(sin nombre)'}</strong>
+       <span class="badge">${sesion.dia_semana}</span>
+       <span class="badge">${sesion.duracion_estimada_min} min</span></p>
+    ${tablaEjercicios(sesion.ejercicios)}
+  `;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Plan semanal (ejercicios agrupados por día) ──────
+
+let ejerciciosPorPatron = new Map();
+
+async function cargarCatalogoEjercicios() {
+  const ejercicios = await api('/ejercicios');
+  ejerciciosPorPatron = new Map();
+  for (const e of ejercicios) {
+    const lista = ejerciciosPorPatron.get(e.patron_movimiento) ?? [];
+    lista.push(e);
+    ejerciciosPorPatron.set(e.patron_movimiento, lista);
+  }
+}
+
+function selectorEjercicio(ej) {
+  const opciones = ejerciciosPorPatron.get(ej.patron_movimiento) ?? [];
+  return `
+    <select class="swap-ejercicio" data-se-id="${ej.sesion_ejercicio_id}">
+      ${opciones.map(o => `<option value="${o.id}" ${o.id === ej.ejercicio_id ? 'selected' : ''}>${o.nombre}</option>`).join('')}
+    </select>
+  `;
+}
+
+const FASE_LABEL = {
+  activacion: 'Activación',
+  potencia: 'Potencia',
+  fuerza: 'Fuerza',
+  accesorios: 'Accesorios',
+  core: 'Core',
+  finisher: 'Finisher',
+};
+
+function tablaEjercicios(ejercicios) {
+  // Agrupa filas consecutivas de la misma fase bajo una sola celda (rowspan)
+  // para que se lea como bloques ordenados en vez de una lista plana.
+  const filas = [];
+  let i = 0;
+  while (i < ejercicios.length) {
+    let j = i;
+    while (j < ejercicios.length && ejercicios[j].fase === ejercicios[i].fase) j++;
+    const span = j - i;
+    for (let k = i; k < j; k++) {
+      filas.push({
+        ej: ejercicios[k],
+        faseCell: k === i
+          ? `<td class="fase-cell" rowspan="${span}">${FASE_LABEL[ejercicios[k].fase] ?? ejercicios[k].fase}</td>`
+          : '',
+      });
+    }
+    i = j;
+  }
+
+  return `
+    <table>
+      <tbody>
+        ${filas.map(({ ej, faseCell }) => `
+          <tr>
+            ${faseCell}
+            <td>
+              ${selectorEjercicio(ej)}
+              ${ej.notas ? `<div class="ej-desc">${ej.notas}</div>` : ''}
+            </td>
+            <td>${ej.metodo}${ej.video_url ? ` · <a href="${ej.video_url}" target="_blank" rel="noopener">🎥</a>` : ''}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+let bloqueActualPlan = null;
+
+document.addEventListener('change', async (e) => {
+  const select = e.target.closest('.swap-ejercicio');
+  if (!select) return;
+
+  const seId = select.dataset.seId;
+  const ejercicioId = Number(select.value);
+
+  try {
+    await api(`/sesion-ejercicios/${seId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ejercicioId }),
+    });
+    showToast('Ejercicio actualizado');
+    if (bloqueActualPlan) await cargarPlan(bloqueActualPlan);
+    if (sesionActualResultado) await mostrarSesion(sesionActualResultado);
+    if (sesionActualEntrenar) await mostrarResultadoEntrenar(sesionActualEntrenar);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+async function cargarPlan(bloqueId) {
+  bloqueActualPlan = bloqueId;
+  const contenedor = $('#plan-semanal');
+  if (!bloqueId) {
+    contenedor.innerHTML = '<p class="empty">Creá un bloque para ver su plan semanal.</p>';
+    return;
+  }
+
+  const sesiones = await api(`/sesiones?bloqueId=${bloqueId}`);
+  const porDia = new Map();
+  for (const s of sesiones) {
+    const lista = porDia.get(s.dia_semana) ?? [];
+    lista.push(s);
+    porDia.set(s.dia_semana, lista);
+  }
+
+  contenedor.innerHTML = DIAS.map(dia => {
+    const sesionesDelDia = porDia.get(dia) ?? [];
+    if (sesionesDelDia.length === 0) {
+      return `
+        <div class="dia-block">
+          <div class="dia-header"><span>${DIAS_LABEL[dia]}</span></div>
+          <div class="dia-descanso">Descanso / sin sesión</div>
+        </div>`;
+    }
+    return sesionesDelDia.map(s => `
+      <div class="dia-block">
+        <div class="dia-header">
+          <span>${DIAS_LABEL[dia]}</span>
+          <span class="sesion-info">
+            <span class="sesion-nombre">${s.nombre || '(sin nombre)'} · ${s.duracion_estimada_min} min</span>
+            <button type="button" class="btn-borrar-sesion" data-sesion-id="${s.id}" title="Borrar sesión">🗑</button>
+          </span>
+        </div>
+        ${s.ejercicios.length ? tablaEjercicios(s.ejercicios) : '<div class="dia-descanso">Sin ejercicios cargados</div>'}
+      </div>`).join('');
+  }).join('');
+}
+
+$('#select-plan-bloque').addEventListener('change', (e) => cargarPlan(e.target.value));
+
+$('#plan-semanal').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-borrar-sesion');
+  if (!btn) return;
+
+  if (!confirm('¿Borrar esta sesión y sus ejercicios?')) return;
+
+  try {
+    await api(`/sesiones/${btn.dataset.sesionId}`, { method: 'DELETE' });
+    showToast('Sesión borrada');
+    if (bloqueActualPlan) await cargarPlan(bloqueActualPlan);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+// ── Entrenar hoy (generador rápido por objetivo) ─────
+
+const OBJETIVOS = {
+  empuje: {
+    emoji: '💪', label: 'Empuje', subtitulo: 'Pecho, hombro, tríceps', duracion: 35,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'fuerza', patron: 'empuje', cantidad: 2, metodo: 'superserie' },
+      { fase: 'accesorios', patron: 'estabilidad', cantidad: 1, metodo: 'circuito' },
+      { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
+    ],
+  },
+  tiron: {
+    emoji: '🏋️', label: 'Tirón', subtitulo: 'Espalda, bíceps', duracion: 35,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'fuerza', patron: 'tiron', cantidad: 2, metodo: 'superserie' },
+      { fase: 'accesorios', patron: 'rotacion', cantidad: 1, metodo: 'circuito' },
+      { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
+    ],
+  },
+  pierna_rodilla: {
+    emoji: '🦵', label: 'Pierna (cuádriceps)', subtitulo: 'Sentadillas, zancadas', duracion: 45,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'potencia', patron: 'potencia', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'fuerza', patron: 'rodilla', cantidad: 2, metodo: 'superserie' },
+      { fase: 'accesorios', patron: 'desaceleracion', cantidad: 1, metodo: 'circuito' },
+      { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
+    ],
+  },
+  cadera: {
+    emoji: '🍑', label: 'Cadera / Posterior', subtitulo: 'Glúteo, isquios, peso muerto', duracion: 45,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'potencia', patron: 'aceleracion', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'fuerza', patron: 'cadera', cantidad: 2, metodo: 'contraste' },
+      { fase: 'accesorios', patron: 'estabilidad', cantidad: 1, metodo: 'circuito' },
+      { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
+    ],
+  },
+  core: {
+    emoji: '🔥', label: 'Core / Rotación', subtitulo: 'Abdomen, oblicuos, antirotación', duracion: 30,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'accesorios', patron: 'rotacion', cantidad: 1, metodo: 'circuito' },
+      { fase: 'core', patron: 'core', cantidad: 2, metodo: 'circuito' },
+    ],
+  },
+  salto: {
+    emoji: '🚀', label: 'Salto / Potencia', subtitulo: 'Explosividad, vertical jump', duracion: 40,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'potencia', patron: 'potencia', cantidad: 2, metodo: 'complejo' },
+      { fase: 'fuerza', patron: 'rodilla', cantidad: 1, metodo: 'superserie' },
+      { fase: 'finisher', patron: 'potencia', cantidad: 1, metodo: 'amrap' },
+    ],
+  },
+  velocidad: {
+    emoji: '⚡', label: 'Velocidad / Reacción', subtitulo: 'Aceleración, cambios de dirección', duracion: 35,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'potencia', patron: 'aceleracion', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'accesorios', patron: 'desaceleracion', cantidad: 1, metodo: 'circuito' },
+      { fase: 'core', patron: 'rotacion', cantidad: 1, metodo: 'tradicional' },
+    ],
+  },
+  movilidad: {
+    emoji: '🧘', label: 'Movilidad / Recuperación', subtitulo: 'Día liviano, activación y estiramiento', duracion: 20,
+    fases: [
+      { fase: 'activacion', patron: 'movilidad', cantidad: 2, metodo: 'circuito' },
+      { fase: 'accesorios', patron: 'estabilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
+    ],
+  },
+};
+
+let objetivoSeleccionado = null;
+
+function renderObjetivos() {
+  const grid = $('#objetivos-grid');
+  grid.innerHTML = Object.entries(OBJETIVOS).map(([key, o]) => `
+    <button type="button" class="objetivo-btn" data-key="${key}">
+      <span class="objetivo-emoji">${o.emoji}</span>
+      <span class="objetivo-label">${o.label}</span>
+      <span class="objetivo-sub">${o.subtitulo}</span>
+    </button>
+  `).join('');
+
+  grid.querySelectorAll('.objetivo-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.objetivo-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      objetivoSeleccionado = btn.dataset.key;
+      mostrarPreviewObjetivo(objetivoSeleccionado);
+    });
+  });
+}
+
+function mostrarPreviewObjetivo(key) {
+  const o = OBJETIVOS[key];
+  const preview = $('#objetivo-preview');
+  preview.style.display = 'block';
+  preview.innerHTML = `
+    <p style="font-size:0.8rem; color:var(--text-dim); margin-top:0.75rem;">
+      ⏱ ${o.duracion} min · ${o.fases.map(f => FASE_LABEL[f.fase] ?? f.fase).join(' → ')}
+    </p>
+    <button type="button" class="primary" id="btn-generar-rapida">Generar sesión</button>
+  `;
+  $('#btn-generar-rapida').addEventListener('click', generarSesionRapida);
+}
+
+let sesionActualEntrenar = null;
+
+async function generarSesionRapida() {
+  const o = OBJETIVOS[objetivoSeleccionado];
+  const bloqueId = Number($('#select-entrenar-bloque').value);
+  const diaSemana = $('#select-entrenar-dia').value;
+
+  if (!bloqueId) {
+    showToast('Creá un bloque primero (pestaña Bloques)', true);
+    return;
+  }
+
+  try {
+    const { sesionId } = await api('/sesiones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bloqueId,
+        diaSemana,
+        nombreSesion: `${o.emoji} ${o.label}`,
+        duracionEstimadaMin: o.duracion,
+        fases: o.fases,
+      }),
+    });
+
+    sesionActualEntrenar = sesionId;
+    await mostrarResultadoEntrenar(sesionId);
+    showToast('¡Sesión armada!');
+    $('#select-plan-bloque').value = bloqueId;
+    await cargarPlan(bloqueId);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function mostrarResultadoEntrenar(id) {
+  const sesion = await api(`/sesiones/${id}`);
+  $('#card-resultado-entrenar').style.display = 'block';
+  $('#resultado-entrenar').innerHTML = `
+    <p><strong>${sesion.nombre}</strong>
+       <span class="badge">${sesion.dia_semana}</span>
+       <span class="badge">${sesion.duracion_estimada_min} min</span></p>
+    ${tablaEjercicios(sesion.ejercicios)}
+  `;
+}
+
+// ── Tabs ─────────────────────────────────────────────
+
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelector(`.tab-panel[data-panel="${btn.dataset.tab}"]`).classList.add('active');
+  });
+});
+
+// ── Init ─────────────────────────────────────────────
+
+const DIA_POR_JS_DAY = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+$('#select-entrenar-dia').value = DIA_POR_JS_DAY[new Date().getDay()];
+
+(async function init() {
+  try {
+    renderObjetivos();
+    await cargarCatalogoEjercicios();
+    await cargarBloques();
+    const bloqueInicial = $('#select-plan-bloque').value;
+    await cargarPlan(bloqueInicial);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+})();
+</script>
+
+</body>
+</html>

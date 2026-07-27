@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/bloques", "destination": "/api/index" },
+    { "source": "/bloques/:path*", "destination": "/api/index" },
+    { "source": "/sesiones", "destination": "/api/index" },
+    { "source": "/sesiones/:path*", "destination": "/api/index" },
+    { "source": "/sesion-ejercicios/:path*", "destination": "/api/index" },
+    { "source": "/ejercicios", "destination": "/api/index" },
+    { "source": "/ejercicios/:path*", "destination": "/api/index" }
+  ]
+}
