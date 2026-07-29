@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { pool } from './db.js';
+import { pool } from '../db'; // tu pool mysql2 existente
 
 // ── Validación de entrada ──────────────────────────────────
 
@@ -79,6 +79,18 @@ export async function armarSesion(input: unknown) {
 
   try {
     await conn.beginTransaction();
+
+    // Si ya existe una sesión para este bloque + día, la reemplazamos
+    // en vez de crear una nueva (evita duplicados como el de "lunes" x4)
+    const [existentes] = await conn.execute(
+      `SELECT id FROM sesiones WHERE bloque_id = ? AND dia_semana = ?`,
+      [data.bloqueId, data.diaSemana]
+    );
+    if ((existentes as any[]).length > 0) {
+      const idExistente = (existentes as any[])[0].id;
+      await conn.execute(`DELETE FROM sesion_ejercicios WHERE sesion_id = ?`, [idExistente]);
+      await conn.execute(`DELETE FROM sesiones WHERE id = ?`, [idExistente]);
+    }
 
     const [sesionResult] = await conn.execute(
       `INSERT INTO sesiones (bloque_id, dia_semana, nombre, duracion_estimada_min)
