@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { pool } from '../db'; // tu pool mysql2 existente
+import { pool } from './db.js'; // tu pool mysql2 existente
 
 // ── Validación de entrada ──────────────────────────────────
 
