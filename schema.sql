@@ -42,7 +42,8 @@ CREATE TABLE sesiones (
   dia_semana ENUM('lunes','martes','miercoles','jueves','viernes','sabado','domingo') NOT NULL,
   nombre VARCHAR(120) NULL, -- ej: "Empuje + Potencia + Core"
   duracion_estimada_min TINYINT NOT NULL DEFAULT 40,
-  FOREIGN KEY (bloque_id) REFERENCES bloques(id) ON DELETE CASCADE
+  FOREIGN KEY (bloque_id) REFERENCES bloques(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_bloque_dia (bloque_id, dia_semana)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE sesion_ejercicios (

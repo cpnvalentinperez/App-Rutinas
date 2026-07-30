@@ -80,24 +80,24 @@ export async function armarSesion(input: unknown) {
   try {
     await conn.beginTransaction();
 
-    // Si ya existe una sesión para este bloque + día, la reemplazamos
-    // en vez de crear una nueva (evita duplicados como el de "lunes" x4)
-    const [existentes] = await conn.execute(
-      `SELECT id FROM sesiones WHERE bloque_id = ? AND dia_semana = ?`,
-      [data.bloqueId, data.diaSemana]
-    );
-    if ((existentes as any[]).length > 0) {
-      const idExistente = (existentes as any[])[0].id;
-      await conn.execute(`DELETE FROM sesion_ejercicios WHERE sesion_id = ?`, [idExistente]);
-      await conn.execute(`DELETE FROM sesiones WHERE id = ?`, [idExistente]);
-    }
-
+    // UPSERT atómico apoyado en el UNIQUE KEY (bloque_id, dia_semana):
+    // si ya existe una sesión para ese bloque + día, MySQL la actualiza en vez
+    // de insertar una fila nueva, así que dos requests concurrentes para el
+    // mismo bloque+día no pueden producir duplicados (a diferencia del viejo
+    // patrón SELECT→DELETE→INSERT, que sí era vulnerable a esa carrera).
     const [sesionResult] = await conn.execute(
       `INSERT INTO sesiones (bloque_id, dia_semana, nombre, duracion_estimada_min)
-       VALUES (?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         id = LAST_INSERT_ID(id),
+         nombre = VALUES(nombre),
+         duracion_estimada_min = VALUES(duracion_estimada_min)`,
       [data.bloqueId, data.diaSemana, data.nombreSesion ?? null, data.duracionEstimadaMin]
     );
     const sesionId = (sesionResult as any).insertId;
+
+    // Si la sesión ya existía, limpiamos sus ejercicios previos antes de recargarla
+    await conn.execute(`DELETE FROM sesion_ejercicios WHERE sesion_id = ?`, [sesionId]);
 
     let orden = 1;
     for (const fase of data.fases as FaseInput[]) {

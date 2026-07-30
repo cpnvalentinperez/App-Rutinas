@@ -5,8 +5,13 @@ import { z } from 'zod';
 import 'dotenv/config';
 import { armarSesion } from './armar-sesion.js';
 import { pool } from './db.js';
+import { runMigrations } from './migrate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+await runMigrations(pool).catch((err) => {
+  console.error('[migrate] no se pudieron correr las migraciones automáticas:', err.message);
+});
 
 export const app = express();
 app.use(express.json());

@@ -535,6 +535,8 @@ $('#form-sesion').addEventListener('submit', async (e) => {
 
   const bloqueId = Number(fd.get('bloqueId'));
 
+  const btnSubmit = e.target.querySelector('button[type="submit"]');
+  btnSubmit.disabled = true;
   try {
     const { sesionId } = await api('/sesiones', {
       method: 'POST',
@@ -553,6 +555,8 @@ $('#form-sesion').addEventListener('submit', async (e) => {
     await cargarPlan(bloqueId);
   } catch (err) {
     showToast(err.message, true);
+  } finally {
+    btnSubmit.disabled = false;
   }
 });
 
@@ -848,6 +852,8 @@ async function generarSesionRapida() {
     return;
   }
 
+  const btnGenerar = $('#btn-generar-rapida');
+  btnGenerar.disabled = true;
   try {
     const { sesionId } = await api('/sesiones', {
       method: 'POST',
@@ -868,6 +874,8 @@ async function generarSesionRapida() {
     await cargarPlan(bloqueId);
   } catch (err) {
     showToast(err.message, true);
+  } finally {
+    btnGenerar.disabled = false;
   }
 }
 

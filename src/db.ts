@@ -11,4 +11,5 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 3,
   idleTimeout: 10000,
+  connectTimeout: 10000,
 });
