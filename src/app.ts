@@ -6,11 +6,28 @@ import 'dotenv/config';
 import { armarSesion } from './armar-sesion.js';
 import { pool } from './db.js';
 import { runMigrations } from './migrate.js';
+import { seedRecetas } from './seed-recetas.js';
+import { crearReceta, actualizarReceta } from './recetas-repo.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-await runMigrations(pool).catch((err) => {
+// mysql2 no siempre respeta connectTimeout cuando el bloqueo ocurre a nivel
+// de socket TCP (ej. un puerto que no responde ni rechaza la conexión), así
+// que agregamos un timeout propio para que el arranque nunca quede colgado.
+function conTimeout<T>(promesa: Promise<T>, ms: number, etiqueta: string): Promise<T> {
+  return Promise.race([
+    promesa,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`[${etiqueta}] tardó más de ${ms}ms, se aborta el arranque`)), ms)
+    ),
+  ]);
+}
+
+await conTimeout(runMigrations(pool), 8000, 'migrate').catch((err) => {
   console.error('[migrate] no se pudieron correr las migraciones automáticas:', err.message);
+});
+await conTimeout(seedRecetas(pool), 8000, 'seed').catch((err) => {
+  console.error('[seed] no se pudieron cargar las recetas iniciales:', err.message);
 });
 
 export const app = express();
@@ -164,6 +181,24 @@ const BloqueSchema = z.object({
   notas: z.string().max(255).optional(),
 });
 
+const IngredienteSchema = z.object({
+  nombre: z.string().min(1).max(120),
+  cantidad: z.string().max(40).optional(),
+});
+
+const RecetaSchema = z.object({
+  nombre: z.string().min(1).max(120),
+  tipoComida: z.enum(['desayuno', 'almuerzo', 'cena', 'snack']),
+  tiempoPrepMin: z.number().int().min(1).max(600),
+  porciones: z.number().int().min(1).max(20).default(1),
+  dificultad: z.enum(['facil', 'media']).default('facil'),
+  caloriasAprox: z.number().int().min(0).optional(),
+  proteinaAproxG: z.number().int().min(0).optional(),
+  instrucciones: z.string().min(1),
+  notas: z.string().max(255).optional(),
+  ingredientes: z.array(IngredienteSchema).min(1),
+});
+
 app.get('/bloques', asyncHandler(async (_req, res) => {
   const [rows] = await pool.query('SELECT * FROM bloques ORDER BY id DESC');
   res.json(rows);
@@ -200,6 +235,134 @@ app.delete('/bloques/:id', asyncHandler(async (req, res) => {
   }
   res.json({ ok: true });
 }));
+
+// ── Recetas (comidas fáciles/fit) ────────────────────
+
+app.get('/recetas', asyncHandler(async (req, res) => {
+  const tipo = typeof req.query.tipo === 'string' ? req.query.tipo : undefined;
+  const tiempoMax = req.query.tiempoMax ? Number(req.query.tiempoMax) : undefined;
+  const dificultad = typeof req.query.dificultad === 'string' ? req.query.dificultad : undefined;
+
+  const condiciones: string[] = [];
+  const params: (string | number)[] = [];
+  if (tipo) {
+    condiciones.push('tipo_comida = ?');
+    params.push(tipo);
+  }
+  if (tiempoMax) {
+    condiciones.push('tiempo_prep_min <= ?');
+    params.push(tiempoMax);
+  }
+  if (dificultad) {
+    condiciones.push('dificultad = ?');
+    params.push(dificultad);
+  }
+  const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+  const [recetas] = await pool.query(
+    `SELECT id, nombre, tipo_comida, tiempo_prep_min, porciones, dificultad, calorias_aprox, proteina_aprox_g
+     FROM recetas ${where}
+     ORDER BY tiempo_prep_min ASC, nombre ASC`,
+    params
+  );
+  res.json(recetas);
+}));
+
+app.get('/recetas/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const [recetas] = (await pool.execute('SELECT * FROM recetas WHERE id = ?', [id])) as any;
+  const receta = recetas[0];
+  if (!receta) {
+    res.status(404).json({ error: 'Receta no encontrada' });
+    return;
+  }
+
+  const [ingredientes] = await pool.execute(
+    `SELECT i.nombre, ri.cantidad
+     FROM receta_ingredientes ri
+     JOIN ingredientes_comida i ON i.id = ri.ingrediente_id
+     WHERE ri.receta_id = ?
+     ORDER BY ri.id`,
+    [id]
+  );
+
+  res.json({ ...receta, ingredientes });
+}));
+
+app.post('/recetas', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const data = RecetaSchema.parse(req.body);
+    await conn.beginTransaction();
+    const id = await crearReceta(conn, data);
+    await conn.commit();
+    res.status(201).json({ id });
+  } catch (err: any) {
+    await conn.rollback();
+    res.status(400).json({ error: err.message ?? 'Error al crear la receta' });
+  } finally {
+    conn.release();
+  }
+});
+
+app.put('/recetas/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const conn = await pool.getConnection();
+  try {
+    const data = RecetaSchema.parse(req.body);
+    await conn.beginTransaction();
+    await actualizarReceta(conn, id, data);
+    await conn.commit();
+    res.json({ ok: true });
+  } catch (err: any) {
+    await conn.rollback();
+    res.status(400).json({ error: err.message ?? 'Error al actualizar la receta' });
+  } finally {
+    conn.release();
+  }
+});
+
+app.delete('/recetas/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const [result] = (await pool.execute('DELETE FROM recetas WHERE id = ?', [id])) as any;
+  if (result.affectedRows === 0) {
+    res.status(404).json({ error: 'Receta no encontrada' });
+    return;
+  }
+  res.json({ ok: true });
+}));
+
+// Carga rápida: pega un array JSON con la misma forma que RecetaSchema y
+// crea todas las que pueda; las que choquen por nombre duplicado se omiten
+// en vez de abortar el resto del lote.
+app.post('/recetas/bulk', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const items = z.array(RecetaSchema).min(1).parse(req.body);
+    await conn.beginTransaction();
+    let creadas = 0;
+    let omitidas = 0;
+    for (const data of items) {
+      try {
+        await crearReceta(conn, data);
+        creadas++;
+      } catch (err: any) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          omitidas++;
+          continue;
+        }
+        throw err;
+      }
+    }
+    await conn.commit();
+    res.status(201).json({ creadas, omitidas });
+  } catch (err: any) {
+    await conn.rollback();
+    res.status(400).json({ error: err.message ?? 'Error al importar recetas' });
+  } finally {
+    conn.release();
+  }
+});
 
 // Vercel auto-detecta este archivo como entrypoint de servidor y requiere
 // que el export default sea la app/función (no alcanza con el named export).

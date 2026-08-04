@@ -62,6 +62,34 @@ CREATE TABLE sesion_ejercicios (
   FOREIGN KEY (ejercicio_id) REFERENCES ejercicios(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE recetas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(120) NOT NULL UNIQUE,
+  tipo_comida ENUM('desayuno','almuerzo','cena','snack') NOT NULL,
+  tiempo_prep_min TINYINT NOT NULL,
+  porciones TINYINT NOT NULL DEFAULT 1,
+  dificultad ENUM('facil','media') NOT NULL DEFAULT 'facil',
+  calorias_aprox SMALLINT NULL,
+  proteina_aprox_g SMALLINT NULL,
+  instrucciones TEXT NOT NULL,
+  notas VARCHAR(255) NULL,
+  INDEX idx_tipo_comida (tipo_comida)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE ingredientes_comida (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(120) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE receta_ingredientes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  receta_id INT NOT NULL,
+  ingrediente_id INT NOT NULL,
+  cantidad VARCHAR(40) NULL,
+  FOREIGN KEY (receta_id) REFERENCES recetas(id) ON DELETE CASCADE,
+  FOREIGN KEY (ingrediente_id) REFERENCES ingredientes_comida(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE historial_entrenamientos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   fecha DATE NOT NULL,

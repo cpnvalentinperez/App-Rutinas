@@ -15,6 +15,8 @@
     --accent: #6ee7b7;
     --accent-2: #7dd3fc;
     --danger: #f87171;
+    --warn: #fbbf24;
+    --purple: #c4b5fd;
     --radius: 12px;
   }
   @media (prefers-color-scheme: light) {
@@ -28,6 +30,8 @@
       --accent: #059669;
       --accent-2: #0284c7;
       --danger: #dc2626;
+      --warn: #d97706;
+      --purple: #7c3aed;
     }
   }
   * { box-sizing: border-box; }
@@ -130,7 +134,7 @@
     gap: 0.5rem;
     cursor: pointer;
   }
-  .item .meta { font-size: 0.75rem; color: var(--text-dim); }
+  .item .meta { font-size: 0.75rem; color: var(--text-dim); display: inline-flex; gap: 0.3rem; margin-top: 0.3rem; }
   .item strong { display: block; font-size: 0.9rem; }
 
   .fase-row {
@@ -159,6 +163,17 @@
     color: var(--text-dim);
   }
 
+  .badge-tipo-desayuno, .badge-tiempo-lento { background: color-mix(in srgb, var(--warn) 15%, transparent); border-color: var(--warn); color: var(--warn); }
+  .badge-tipo-almuerzo, .badge-tiempo-medio { background: color-mix(in srgb, var(--accent-2) 15%, transparent); border-color: var(--accent-2); color: var(--accent-2); }
+  .badge-tipo-cena { background: color-mix(in srgb, var(--purple) 15%, transparent); border-color: var(--purple); color: var(--purple); }
+  .badge-tipo-snack, .badge-dificultad-facil, .badge-tiempo-rapido { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: var(--accent); color: var(--accent); }
+  .badge-dificultad-media { background: color-mix(in srgb, var(--danger) 15%, transparent); border-color: var(--danger); color: var(--danger); }
+
+  .item[data-tipo="desayuno"] { border-left: 3px solid var(--warn); }
+  .item[data-tipo="almuerzo"] { border-left: 3px solid var(--accent-2); }
+  .item[data-tipo="cena"] { border-left: 3px solid var(--purple); }
+  .item[data-tipo="snack"] { border-left: 3px solid var(--accent); }
+
   .empty { color: var(--text-dim); font-size: 0.85rem; padding: 0.5rem 0; }
 
   .dia-block { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.6rem; overflow: hidden; }
@@ -181,6 +196,16 @@
     font-size: 0.8rem;
   }
   .btn-borrar-sesion:hover { color: var(--danger); }
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 0.1rem 0.3rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .btn-icon:hover { color: var(--accent-2); }
+  .btn-icon.btn-icon-danger:hover { color: var(--danger); }
   #select-plan-bloque { text-align: center; font-weight: 600; }
   .dia-descanso { padding: 0.5rem 0.75rem; color: var(--text-dim); font-size: 0.8rem; font-style: italic; }
   .dia-block table { margin: 0; }
@@ -238,7 +263,7 @@
 
 <header>
   <h1>🏋️ Rutinas Gym</h1>
-  <p>Armado de sesiones por patrón de movimiento</p>
+  <p>Arma tus propias Rutinas y Recetas Fit👊</p>
 </header>
 
 <nav class="tabs">
@@ -246,6 +271,7 @@
   <button data-tab="entrenar" type="button">🎯 Entrenar</button>
   <button data-tab="sesion" type="button">➕ Manual</button>
   <button data-tab="bloques" type="button">📦 Bloques</button>
+  <button data-tab="comidas" type="button">🍳 Comidas</button>
 </nav>
 
 <main>
@@ -360,6 +386,122 @@
   <section class="card" id="card-resultado" style="display:none;">
     <h2>Sesión armada</h2>
     <div id="resultado"></div>
+  </section>
+</div>
+
+<div class="tab-panel" data-panel="comidas">
+  <section class="card">
+    <h2>
+      Comidas fáciles y fit
+      <span style="display:flex; gap:0.4rem;">
+        <button class="secondary" id="toggle-bulk-recetas" type="button">⇪ Carga rápida</button>
+        <button class="secondary" id="toggle-receta-form" type="button">+ Nueva</button>
+      </span>
+    </h2>
+
+    <form id="form-receta" style="display:none; margin-bottom:0.75rem;">
+      <label>Nombre</label>
+      <input name="nombre" required maxlength="120" placeholder="Tostadas con palta y huevo" />
+
+      <div class="row">
+        <div>
+          <label>Tipo</label>
+          <select name="tipoComida">
+            <option value="desayuno">Desayuno</option>
+            <option value="almuerzo">Almuerzo</option>
+            <option value="cena">Cena</option>
+            <option value="snack">Snack</option>
+          </select>
+        </div>
+        <div>
+          <label>Dificultad</label>
+          <select name="dificultad">
+            <option value="facil">Fácil</option>
+            <option value="media">Media</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Tiempo prep. (min)</label>
+          <input name="tiempoPrepMin" type="number" min="1" max="600" value="10" required />
+        </div>
+        <div>
+          <label>Porciones</label>
+          <input name="porciones" type="number" min="1" max="20" value="1" required />
+        </div>
+        <div>
+          <label>Calorías aprox.</label>
+          <input name="caloriasAprox" type="number" min="0" />
+        </div>
+        <div>
+          <label>Proteína aprox. (g)</label>
+          <input name="proteinaAproxG" type="number" min="0" />
+        </div>
+      </div>
+
+      <label>Ingredientes (uno por línea, ej: "Huevo - 2 unidades")</label>
+      <textarea name="ingredientes" rows="4" required placeholder="Pan integral - 2 rebanadas&#10;Palta - 1/2 unidad&#10;Huevo - 1 unidad"></textarea>
+
+      <label>Instrucciones</label>
+      <textarea name="instrucciones" rows="3" required></textarea>
+
+      <label>Notas (opcional)</label>
+      <input name="notas" maxlength="255" />
+
+      <div class="row" style="margin-top:0.75rem;">
+        <button type="submit" class="primary" id="btn-guardar-receta">Crear receta</button>
+        <button type="button" class="secondary" id="btn-cancelar-receta">Cancelar</button>
+      </div>
+    </form>
+
+    <form id="form-bulk-recetas" style="display:none; margin-bottom:0.75rem;">
+      <label>Pegá un array JSON de recetas (misma forma que el detalle de una receta, con "ingredientes": [{"nombre","cantidad"}])</label>
+      <textarea name="json" rows="6" placeholder='[{"nombre":"...", "tipoComida":"desayuno", "tiempoPrepMin":10, "porciones":1, "dificultad":"facil", "instrucciones":"...", "ingredientes":[{"nombre":"Huevo","cantidad":"2 unidades"}]}]'></textarea>
+      <div class="row" style="margin-top:0.75rem;">
+        <button type="submit" class="primary">Importar</button>
+        <button type="button" class="secondary" id="btn-cancelar-bulk">Cancelar</button>
+      </div>
+    </form>
+
+    <div class="row">
+      <div>
+        <label>Tipo</label>
+        <select id="filtro-tipo-comida">
+          <option value="">Todas</option>
+          <option value="desayuno">Desayuno</option>
+          <option value="almuerzo">Almuerzo</option>
+          <option value="cena">Cena</option>
+          <option value="snack">Snack</option>
+        </select>
+      </div>
+      <div>
+        <label>Tiempo máx.</label>
+        <select id="filtro-tiempo-comida">
+          <option value="">Cualquiera</option>
+          <option value="10">10 min</option>
+          <option value="15">15 min</option>
+          <option value="20">20 min</option>
+          <option value="30">30 min</option>
+        </select>
+      </div>
+      <div>
+        <label>Dificultad</label>
+        <select id="filtro-dificultad-comida">
+          <option value="">Cualquiera</option>
+          <option value="facil">Fácil</option>
+          <option value="media">Media</option>
+        </select>
+      </div>
+    </div>
+
+    <ul class="list" id="lista-recetas" style="margin-top:0.75rem;"><li class="empty">Cargando...</li></ul>
+  </section>
+
+  <section class="card" id="card-receta-detalle" style="display:none;">
+    <h2 id="receta-detalle-titulo"></h2>
+    <div id="receta-detalle-body"></div>
   </section>
 </div>
 
@@ -890,6 +1032,268 @@ async function mostrarResultadoEntrenar(id) {
   `;
 }
 
+// ── Comidas ──────────────────────────────────────────
+
+const TIPO_COMIDA_LABEL = { desayuno: 'Desayuno', almuerzo: 'Almuerzo', cena: 'Cena', snack: 'Snack' };
+const DIFICULTAD_LABEL = { facil: 'Fácil', media: 'Media' };
+
+function claseTiempo(min) {
+  if (min <= 10) return 'badge-tiempo-rapido';
+  if (min <= 20) return 'badge-tiempo-medio';
+  return 'badge-tiempo-lento';
+}
+
+function cerrarRecetaDetalle() {
+  $('#card-receta-detalle').style.display = 'none';
+  $('#receta-detalle-body').innerHTML = '';
+}
+
+async function cargarRecetas() {
+  const params = new URLSearchParams();
+  const tipo = $('#filtro-tipo-comida').value;
+  const tiempoMax = $('#filtro-tiempo-comida').value;
+  const dificultad = $('#filtro-dificultad-comida').value;
+  if (tipo) params.set('tipo', tipo);
+  if (tiempoMax) params.set('tiempoMax', tiempoMax);
+  if (dificultad) params.set('dificultad', dificultad);
+
+  cerrarRecetaDetalle();
+
+  const lista = $('#lista-recetas');
+  lista.innerHTML = '<li class="empty">Cargando...</li>';
+  try {
+    const recetas = await api(`/recetas?${params.toString()}`);
+    lista.innerHTML = recetas.length
+      ? recetas.map(r => `
+        <li class="item" data-receta-id="${r.id}" data-tipo="${r.tipo_comida}">
+          <div>
+            <strong>${r.nombre}</strong>
+            <span class="meta">
+              <span class="badge badge-tipo-${r.tipo_comida}">${TIPO_COMIDA_LABEL[r.tipo_comida] ?? r.tipo_comida}</span>
+              <span class="badge badge-dificultad-${r.dificultad}">${DIFICULTAD_LABEL[r.dificultad] ?? r.dificultad}</span>
+            </span>
+          </div>
+          <span class="sesion-info">
+            <span class="badge ${claseTiempo(r.tiempo_prep_min)}">⏱ ${r.tiempo_prep_min} min</span>
+            ${r.calorias_aprox ? `<span class="badge">${r.calorias_aprox} kcal</span>` : ''}
+            <button type="button" class="btn-icon btn-editar-receta" data-receta-id="${r.id}" title="Editar">✎</button>
+            <button type="button" class="btn-icon btn-icon-danger btn-borrar-receta" data-receta-id="${r.id}" title="Borrar">🗑</button>
+          </span>
+        </li>`).join('')
+      : '<li class="empty">No hay recetas con esos filtros.</li>';
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function mostrarRecetaDetalle(id) {
+  try {
+    const receta = await api(`/recetas/${id}`);
+    const card = $('#card-receta-detalle');
+    card.style.display = 'block';
+    $('#receta-detalle-titulo').textContent = receta.nombre;
+    $('#receta-detalle-body').innerHTML = `
+      <p>
+        <span class="badge badge-tipo-${receta.tipo_comida}">${TIPO_COMIDA_LABEL[receta.tipo_comida] ?? receta.tipo_comida}</span>
+        <span class="badge ${claseTiempo(receta.tiempo_prep_min)}">⏱ ${receta.tiempo_prep_min} min</span>
+        <span class="badge badge-dificultad-${receta.dificultad}">${DIFICULTAD_LABEL[receta.dificultad] ?? receta.dificultad}</span>
+        ${receta.calorias_aprox ? `<span class="badge">${receta.calorias_aprox} kcal</span>` : ''}
+        ${receta.proteina_aprox_g ? `<span class="badge">${receta.proteina_aprox_g} g prot</span>` : ''}
+        <span class="badge">${receta.porciones} porción${receta.porciones > 1 ? 'es' : ''}</span>
+      </p>
+      <h3 style="font-size:0.85rem; margin: 1rem 0 0.5rem; color:var(--text-dim);">Ingredientes</h3>
+      <ul class="list">
+        ${receta.ingredientes.map(i => `
+          <li class="item">
+            <span>${i.nombre}</span>
+            <span class="meta">${i.cantidad || ''}</span>
+          </li>`).join('')}
+      </ul>
+      <h3 style="font-size:0.85rem; margin: 1rem 0 0.5rem; color:var(--text-dim);">Preparación</h3>
+      <p style="font-size:0.85rem; line-height:1.5;">${receta.instrucciones}</p>
+      ${receta.notas ? `<p class="empty">${receta.notas}</p>` : ''}
+    `;
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+function parseIngredientesTexto(texto) {
+  return texto.split('\n').map(l => l.trim()).filter(Boolean).map(linea => {
+    const idx = linea.indexOf(' - ');
+    if (idx === -1) return { nombre: linea };
+    return { nombre: linea.slice(0, idx).trim(), cantidad: linea.slice(idx + 3).trim() || undefined };
+  });
+}
+
+function ingredientesATexto(ingredientes) {
+  return ingredientes.map(i => (i.cantidad ? `${i.nombre} - ${i.cantidad}` : i.nombre)).join('\n');
+}
+
+let editandoRecetaId = null;
+
+function abrirFormReceta() {
+  $('#form-bulk-recetas').style.display = 'none';
+  $('#form-receta').style.display = 'block';
+}
+
+function cerrarFormReceta() {
+  $('#form-receta').style.display = 'none';
+  $('#form-receta').reset();
+  editandoRecetaId = null;
+  $('#btn-guardar-receta').textContent = 'Crear receta';
+}
+
+$('#toggle-receta-form').addEventListener('click', () => {
+  if ($('#form-receta').style.display === 'none') {
+    editandoRecetaId = null;
+    $('#form-receta').reset();
+    $('#btn-guardar-receta').textContent = 'Crear receta';
+    abrirFormReceta();
+  } else {
+    cerrarFormReceta();
+  }
+});
+
+$('#btn-cancelar-receta').addEventListener('click', cerrarFormReceta);
+
+async function editarReceta(id) {
+  try {
+    const receta = await api(`/recetas/${id}`);
+    const form = $('#form-receta');
+    form.nombre.value = receta.nombre;
+    form.tipoComida.value = receta.tipo_comida;
+    form.dificultad.value = receta.dificultad;
+    form.tiempoPrepMin.value = receta.tiempo_prep_min;
+    form.porciones.value = receta.porciones;
+    form.caloriasAprox.value = receta.calorias_aprox ?? '';
+    form.proteinaAproxG.value = receta.proteina_aprox_g ?? '';
+    form.instrucciones.value = receta.instrucciones;
+    form.notas.value = receta.notas ?? '';
+    form.ingredientes.value = ingredientesATexto(receta.ingredientes);
+    editandoRecetaId = id;
+    $('#btn-guardar-receta').textContent = 'Guardar cambios';
+    abrirFormReceta();
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+$('#form-receta').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const ingredientes = parseIngredientesTexto(fd.get('ingredientes'));
+  if (!ingredientes.length) {
+    showToast('Agregá al menos un ingrediente', true);
+    return;
+  }
+  const body = {
+    nombre: fd.get('nombre'),
+    tipoComida: fd.get('tipoComida'),
+    dificultad: fd.get('dificultad'),
+    tiempoPrepMin: Number(fd.get('tiempoPrepMin')),
+    porciones: Number(fd.get('porciones')),
+    caloriasAprox: fd.get('caloriasAprox') ? Number(fd.get('caloriasAprox')) : undefined,
+    proteinaAproxG: fd.get('proteinaAproxG') ? Number(fd.get('proteinaAproxG')) : undefined,
+    instrucciones: fd.get('instrucciones'),
+    notas: fd.get('notas') || undefined,
+    ingredientes,
+  };
+  try {
+    if (editandoRecetaId) {
+      await api(`/recetas/${editandoRecetaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      showToast('Receta actualizada');
+    } else {
+      await api('/recetas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      showToast('Receta creada');
+    }
+    cerrarFormReceta();
+    await cargarRecetas();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+$('#toggle-bulk-recetas').addEventListener('click', () => {
+  const form = $('#form-bulk-recetas');
+  if (form.style.display === 'none') {
+    cerrarFormReceta();
+    form.style.display = 'block';
+  } else {
+    form.style.display = 'none';
+  }
+});
+
+$('#btn-cancelar-bulk').addEventListener('click', () => {
+  $('#form-bulk-recetas').style.display = 'none';
+  $('#form-bulk-recetas').reset();
+});
+
+$('#form-bulk-recetas').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  let items;
+  try {
+    items = JSON.parse(fd.get('json'));
+    if (!Array.isArray(items)) throw new Error('Tiene que ser un array de recetas');
+  } catch (err) {
+    showToast(`JSON inválido: ${err.message}`, true);
+    return;
+  }
+  try {
+    const resultado = await api('/recetas/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items),
+    });
+    showToast(`Importadas ${resultado.creadas}${resultado.omitidas ? `, omitidas ${resultado.omitidas} (nombre duplicado)` : ''}`);
+    e.target.reset();
+    e.target.style.display = 'none';
+    await cargarRecetas();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+$('#lista-recetas').addEventListener('click', async (e) => {
+  const btnBorrar = e.target.closest('.btn-borrar-receta');
+  if (btnBorrar) {
+    if (!confirm('¿Borrar esta receta?')) return;
+    try {
+      await api(`/recetas/${btnBorrar.dataset.recetaId}`, { method: 'DELETE' });
+      showToast('Receta borrada');
+      await cargarRecetas();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+    return;
+  }
+
+  const btnEditar = e.target.closest('.btn-editar-receta');
+  if (btnEditar) {
+    editarReceta(btnEditar.dataset.recetaId);
+    return;
+  }
+
+  const item = e.target.closest('.item');
+  if (!item) return;
+  mostrarRecetaDetalle(item.dataset.recetaId);
+});
+
+$('#filtro-tipo-comida').addEventListener('change', cargarRecetas);
+$('#filtro-tiempo-comida').addEventListener('change', cargarRecetas);
+$('#filtro-dificultad-comida').addEventListener('change', cargarRecetas);
+
 // ── Tabs ─────────────────────────────────────────────
 
 document.querySelectorAll('nav.tabs button').forEach(btn => {
@@ -911,6 +1315,7 @@ $('#select-entrenar-dia').value = DIA_POR_JS_DAY[new Date().getDay()];
     renderObjetivos();
     await cargarCatalogoEjercicios();
     await cargarBloques();
+    await cargarRecetas();
     if (bloquesCache.length) {
       const primerBloqueId = Math.min(...bloquesCache.map(b => b.id));
       $('#select-plan-bloque').value = primerBloqueId;
