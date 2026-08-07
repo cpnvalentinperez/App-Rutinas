@@ -521,7 +521,7 @@
 <script>
 const DIAS = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
 const DIAS_LABEL = { lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles', jueves: 'Jueves', viernes: 'Viernes', sabado: 'Sábado', domingo: 'Domingo' };
-const FASES = ['activacion', 'potencia', 'fuerza', 'accesorios', 'core', 'finisher'];
+const FASES = ['movilidad', 'activacion', 'potencia', 'fuerza', 'accesorios', 'core', 'finisher'];
 const PATRONES = ['empuje', 'tiron', 'rodilla', 'cadera', 'core', 'rotacion', 'potencia', 'aceleracion', 'desaceleracion', 'estabilidad', 'movilidad'];
 const METODOS = ['tradicional', 'superserie', 'circuito', 'emom', 'amrap', 'contraste', 'complejo'];
 
@@ -745,6 +745,7 @@ function selectorEjercicio(ej) {
 }
 
 const FASE_LABEL = {
+  movilidad: 'Movilidad',
   activacion: 'Activación',
   potencia: 'Potencia',
   fuerza: 'Fuerza',
@@ -783,7 +784,10 @@ function tablaEjercicios(ejercicios) {
               ${selectorEjercicio(ej)}
               ${ej.notas ? `<div class="ej-desc">${ej.notas}</div>` : ''}
             </td>
-            <td>${ej.metodo}${ej.video_url ? ` · <a href="${ej.video_url}" target="_blank" rel="noopener">🎥</a>` : ''}</td>
+            <td>
+              ${ej.metodo}${ej.video_url ? ` · <a href="${ej.video_url}" target="_blank" rel="noopener">🎥</a>` : ''}
+              ${ej.series || ej.reps ? `<div class="ej-desc">${[ej.series ? `${ej.series}x${ej.reps ?? ''}` : ej.reps, ej.descanso_seg ? `desc ${ej.descanso_seg}s` : ''].filter(Boolean).join(' · ')}</div>` : ''}
+            </td>
           </tr>`).join('')}
       </tbody>
     </table>
@@ -876,7 +880,7 @@ const OBJETIVOS = {
   empuje: {
     emoji: '💪', label: 'Empuje', subtitulo: 'Pecho, hombro, tríceps', duracion: 35,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'fuerza', patron: 'empuje', cantidad: 2, metodo: 'superserie' },
       { fase: 'accesorios', patron: 'estabilidad', cantidad: 1, metodo: 'circuito' },
       { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
@@ -885,7 +889,7 @@ const OBJETIVOS = {
   tiron: {
     emoji: '🏋️', label: 'Tirón', subtitulo: 'Espalda, bíceps', duracion: 35,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'fuerza', patron: 'tiron', cantidad: 2, metodo: 'superserie' },
       { fase: 'accesorios', patron: 'rotacion', cantidad: 1, metodo: 'circuito' },
       { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
@@ -894,7 +898,7 @@ const OBJETIVOS = {
   pierna_rodilla: {
     emoji: '🦵', label: 'Pierna (cuádriceps)', subtitulo: 'Sentadillas, zancadas', duracion: 45,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'potencia', patron: 'potencia', cantidad: 1, metodo: 'tradicional' },
       { fase: 'fuerza', patron: 'rodilla', cantidad: 2, metodo: 'superserie' },
       { fase: 'accesorios', patron: 'desaceleracion', cantidad: 1, metodo: 'circuito' },
@@ -904,7 +908,7 @@ const OBJETIVOS = {
   cadera: {
     emoji: '🍑', label: 'Cadera / Posterior', subtitulo: 'Glúteo, isquios, peso muerto', duracion: 45,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'potencia', patron: 'aceleracion', cantidad: 1, metodo: 'tradicional' },
       { fase: 'fuerza', patron: 'cadera', cantidad: 2, metodo: 'contraste' },
       { fase: 'accesorios', patron: 'estabilidad', cantidad: 1, metodo: 'circuito' },
@@ -914,7 +918,7 @@ const OBJETIVOS = {
   core: {
     emoji: '🔥', label: 'Core / Rotación', subtitulo: 'Abdomen, oblicuos, antirotación', duracion: 30,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'accesorios', patron: 'rotacion', cantidad: 1, metodo: 'circuito' },
       { fase: 'core', patron: 'core', cantidad: 2, metodo: 'circuito' },
     ],
@@ -922,7 +926,7 @@ const OBJETIVOS = {
   salto: {
     emoji: '🚀', label: 'Salto / Potencia', subtitulo: 'Explosividad, vertical jump', duracion: 40,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'potencia', patron: 'potencia', cantidad: 2, metodo: 'complejo' },
       { fase: 'fuerza', patron: 'rodilla', cantidad: 1, metodo: 'superserie' },
       { fase: 'finisher', patron: 'potencia', cantidad: 1, metodo: 'amrap' },
@@ -931,7 +935,7 @@ const OBJETIVOS = {
   velocidad: {
     emoji: '⚡', label: 'Velocidad / Reacción', subtitulo: 'Aceleración, cambios de dirección', duracion: 35,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'potencia', patron: 'aceleracion', cantidad: 1, metodo: 'tradicional' },
       { fase: 'accesorios', patron: 'desaceleracion', cantidad: 1, metodo: 'circuito' },
       { fase: 'core', patron: 'rotacion', cantidad: 1, metodo: 'tradicional' },
@@ -940,7 +944,7 @@ const OBJETIVOS = {
   movilidad: {
     emoji: '🧘', label: 'Movilidad / Recuperación', subtitulo: 'Día liviano, activación y estiramiento', duracion: 20,
     fases: [
-      { fase: 'activacion', patron: 'movilidad', cantidad: 2, metodo: 'circuito' },
+      { fase: 'movilidad', patron: 'movilidad', cantidad: 2, metodo: 'circuito' },
       { fase: 'accesorios', patron: 'estabilidad', cantidad: 1, metodo: 'tradicional' },
       { fase: 'core', patron: 'core', cantidad: 1, metodo: 'tradicional' },
     ],

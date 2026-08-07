@@ -75,6 +75,21 @@ export async function runMigrations(pool: Pool): Promise<void> {
       );
       console.log('[migrate] agregado UNIQUE KEY uq_bloque_dia (bloque_id, dia_semana)');
     }
+
+    // Suma "movilidad" como fase propia (antes solo existía como patrón de
+    // movimiento, y quedaba mezclada dentro de "activacion"). No se saca
+    // "accesorios" para no romper filas viejas que ya la usan.
+    const [[faseCol]] = (await conn.execute(
+      `SELECT COLUMN_TYPE as tipo FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sesion_ejercicios' AND COLUMN_NAME = 'fase'`
+    )) as any[];
+    if (faseCol && !faseCol.tipo.includes("'movilidad'")) {
+      await conn.execute(
+        `ALTER TABLE sesion_ejercicios
+         MODIFY COLUMN fase ENUM('movilidad','activacion','potencia','fuerza','accesorios','core','finisher') NOT NULL`
+      );
+      console.log('[migrate] agregada fase "movilidad" al enum de sesion_ejercicios');
+    }
   } finally {
     conn.release();
   }

@@ -65,6 +65,7 @@ app.get('/sesiones', asyncHandler(async (req, res) => {
 
   const [ejercicios] = (await pool.query(
     `SELECT se.id AS sesion_ejercicio_id, se.sesion_id, se.orden, se.fase, se.metodo,
+            se.series, se.reps, se.descanso_seg,
             e.id AS ejercicio_id, e.nombre, e.patron_movimiento, e.notas, e.video_url
      FROM sesion_ejercicios se
      JOIN ejercicios e ON e.id = se.ejercicio_id

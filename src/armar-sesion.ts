@@ -4,7 +4,7 @@ import { pool } from './db.js'; // tu pool mysql2 existente
 // ── Validación de entrada ──────────────────────────────────
 
 const FaseSchema = z.object({
-  fase: z.enum(['activacion', 'potencia', 'fuerza', 'accesorios', 'core', 'finisher']),
+  fase: z.enum(['movilidad', 'activacion', 'potencia', 'fuerza', 'accesorios', 'core', 'finisher']),
   patron: z.enum([
     'empuje', 'tiron', 'rodilla', 'cadera', 'core', 'rotacion',
     'potencia', 'aceleracion', 'desaceleracion', 'estabilidad', 'movilidad',
