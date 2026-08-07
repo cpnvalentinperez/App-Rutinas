@@ -8,6 +8,7 @@ import { pool } from './db.js';
 import { runMigrations } from './migrate.js';
 import { seedRecetas } from './seed-recetas.js';
 import { crearReceta, actualizarReceta } from './recetas-repo.js';
+import { armarPlanComidas } from './armar-plan-comidas.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,10 +24,10 @@ function conTimeout<T>(promesa: Promise<T>, ms: number, etiqueta: string): Promi
   ]);
 }
 
-await conTimeout(runMigrations(pool), 8000, 'migrate').catch((err) => {
+await conTimeout(runMigrations(pool), 20000, 'migrate').catch((err) => {
   console.error('[migrate] no se pudieron correr las migraciones automáticas:', err.message);
 });
-await conTimeout(seedRecetas(pool), 8000, 'seed').catch((err) => {
+await conTimeout(seedRecetas(pool), 20000, 'seed').catch((err) => {
   console.error('[seed] no se pudieron cargar las recetas iniciales:', err.message);
 });
 
@@ -189,15 +190,27 @@ const IngredienteSchema = z.object({
 
 const RecetaSchema = z.object({
   nombre: z.string().min(1).max(120),
-  tipoComida: z.enum(['desayuno', 'almuerzo', 'cena', 'snack']),
+  descripcion: z.string().max(255).optional(),
+  tipoComida: z.enum(['desayuno', 'snack', 'almuerzo', 'merienda', 'cena']),
   tiempoPrepMin: z.number().int().min(1).max(600),
   porciones: z.number().int().min(1).max(20).default(1),
-  dificultad: z.enum(['facil', 'media']).default('facil'),
+  dificultad: z.enum(['facil', 'media', 'elaborada']).default('facil'),
   caloriasAprox: z.number().int().min(0).optional(),
   proteinaAproxG: z.number().int().min(0).optional(),
+  carbohidratosG: z.number().int().min(0).optional(),
+  grasasG: z.number().int().min(0).optional(),
+  fibraG: z.number().int().min(0).optional(),
+  vegetariana: z.boolean().default(false),
+  vegana: z.boolean().default(false),
+  sinGluten: z.boolean().default(false),
+  mealPrep: z.boolean().default(false),
+  congelable: z.boolean().default(false),
+  costo: z.enum(['bajo', 'medio', 'alto']).default('medio'),
   instrucciones: z.string().min(1),
   notas: z.string().max(255).optional(),
   ingredientes: z.array(IngredienteSchema).min(1),
+  objetivos: z.array(z.string().min(1).max(60)).default([]),
+  tags: z.array(z.string().min(1).max(60)).default([]),
 });
 
 app.get('/bloques', asyncHandler(async (_req, res) => {
@@ -243,27 +256,41 @@ app.get('/recetas', asyncHandler(async (req, res) => {
   const tipo = typeof req.query.tipo === 'string' ? req.query.tipo : undefined;
   const tiempoMax = req.query.tiempoMax ? Number(req.query.tiempoMax) : undefined;
   const dificultad = typeof req.query.dificultad === 'string' ? req.query.dificultad : undefined;
+  const objetivo = typeof req.query.objetivo === 'string' ? req.query.objetivo : undefined;
+  const vegetariana = req.query.vegetariana === 'true';
+  const vegana = req.query.vegana === 'true';
+  const sinGluten = req.query.sinGluten === 'true';
 
   const condiciones: string[] = [];
   const params: (string | number)[] = [];
   if (tipo) {
-    condiciones.push('tipo_comida = ?');
+    condiciones.push('r.tipo_comida = ?');
     params.push(tipo);
   }
   if (tiempoMax) {
-    condiciones.push('tiempo_prep_min <= ?');
+    condiciones.push('r.tiempo_prep_min <= ?');
     params.push(tiempoMax);
   }
   if (dificultad) {
-    condiciones.push('dificultad = ?');
+    condiciones.push('r.dificultad = ?');
     params.push(dificultad);
+  }
+  if (vegetariana) condiciones.push('r.vegetariana = TRUE');
+  if (vegana) condiciones.push('r.vegana = TRUE');
+  if (sinGluten) condiciones.push('r.sin_gluten = TRUE');
+  if (objetivo) {
+    condiciones.push(
+      'r.id IN (SELECT ro.receta_id FROM receta_objetivos ro JOIN objetivos_comida o ON o.id = ro.objetivo_id WHERE o.nombre = ?)'
+    );
+    params.push(objetivo);
   }
   const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 
   const [recetas] = await pool.query(
-    `SELECT id, nombre, tipo_comida, tiempo_prep_min, porciones, dificultad, calorias_aprox, proteina_aprox_g
-     FROM recetas ${where}
-     ORDER BY tiempo_prep_min ASC, nombre ASC`,
+    `SELECT r.id, r.nombre, r.descripcion, r.tipo_comida, r.tiempo_prep_min, r.porciones, r.dificultad,
+            r.calorias_aprox, r.proteina_aprox_g, r.vegetariana, r.vegana, r.sin_gluten, r.meal_prep, r.costo
+     FROM recetas r ${where}
+     ORDER BY r.tiempo_prep_min ASC, r.nombre ASC`,
     params
   );
   res.json(recetas);
@@ -287,7 +314,24 @@ app.get('/recetas/:id', asyncHandler(async (req, res) => {
     [id]
   );
 
-  res.json({ ...receta, ingredientes });
+  const [objetivos] = await pool.execute(
+    `SELECT o.nombre FROM receta_objetivos ro JOIN objetivos_comida o ON o.id = ro.objetivo_id
+     WHERE ro.receta_id = ? ORDER BY o.nombre`,
+    [id]
+  );
+
+  const [tags] = await pool.execute(
+    `SELECT t.nombre FROM receta_tags rt JOIN tags_comida t ON t.id = rt.tag_id
+     WHERE rt.receta_id = ? ORDER BY t.nombre`,
+    [id]
+  );
+
+  res.json({
+    ...receta,
+    ingredientes,
+    objetivos: (objetivos as any[]).map((o) => o.nombre),
+    tags: (tags as any[]).map((t) => t.nombre),
+  });
 }));
 
 app.post('/recetas', async (req, res) => {
@@ -364,6 +408,57 @@ app.post('/recetas/bulk', async (req, res) => {
     conn.release();
   }
 });
+
+// ── Plan de comidas (selector automático, no inventa recetas) ───────
+
+app.post('/planes-comida', async (req, res) => {
+  try {
+    const resultado = await armarPlanComidas(pool, req.body);
+    res.status(201).json(resultado);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message ?? 'Error al armar el plan de comidas' });
+  }
+});
+
+app.get('/planes-comida', asyncHandler(async (_req, res) => {
+  const [rows] = await pool.query(
+    'SELECT * FROM planes_comida ORDER BY id DESC LIMIT 20'
+  );
+  res.json(rows);
+}));
+
+app.get('/planes-comida/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const [planes] = (await pool.execute('SELECT * FROM planes_comida WHERE id = ?', [id])) as any;
+  const plan = planes[0];
+  if (!plan) {
+    res.status(404).json({ error: 'Plan no encontrado' });
+    return;
+  }
+
+  const [comidas] = await pool.execute(
+    `SELECT pc.id, pc.dia_semana, pc.tipo_comida, r.id AS receta_id, r.nombre, r.descripcion,
+            r.tiempo_prep_min, r.calorias_aprox, r.proteina_aprox_g, r.dificultad
+     FROM plan_comidas pc
+     JOIN recetas r ON r.id = pc.receta_id
+     WHERE pc.plan_id = ?
+     ORDER BY FIELD(pc.dia_semana, 'lunes','martes','miercoles','jueves','viernes','sabado','domingo'),
+              FIELD(pc.tipo_comida, 'desayuno','snack','almuerzo','merienda','cena')`,
+    [id]
+  );
+
+  res.json({ ...plan, comidas });
+}));
+
+app.delete('/planes-comida/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const [result] = (await pool.execute('DELETE FROM planes_comida WHERE id = ?', [id])) as any;
+  if (result.affectedRows === 0) {
+    res.status(404).json({ error: 'Plan no encontrado' });
+    return;
+  }
+  res.json({ ok: true });
+}));
 
 // Vercel auto-detecta este archivo como entrypoint de servidor y requiere
 // que el export default sea la app/función (no alcanza con el named export).

@@ -9,6 +9,8 @@
     { "source": "/ejercicios", "destination": "/api/index" },
     { "source": "/ejercicios/:path*", "destination": "/api/index" },
     { "source": "/recetas", "destination": "/api/index" },
-    { "source": "/recetas/:path*", "destination": "/api/index" }
+    { "source": "/recetas/:path*", "destination": "/api/index" },
+    { "source": "/planes-comida", "destination": "/api/index" },
+    { "source": "/planes-comida/:path*", "destination": "/api/index" }
   ]
 }

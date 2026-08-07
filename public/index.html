@@ -122,6 +122,20 @@
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   .row > * { flex: 1; min-width: 100px; }
 
+  .check-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .check-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .check-chip input { width: auto; }
+
   ul.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
   .item {
     background: var(--panel-2);
@@ -167,12 +181,15 @@
   .badge-tipo-almuerzo, .badge-tiempo-medio { background: color-mix(in srgb, var(--accent-2) 15%, transparent); border-color: var(--accent-2); color: var(--accent-2); }
   .badge-tipo-cena { background: color-mix(in srgb, var(--purple) 15%, transparent); border-color: var(--purple); color: var(--purple); }
   .badge-tipo-snack, .badge-dificultad-facil, .badge-tiempo-rapido { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: var(--accent); color: var(--accent); }
+  .badge-tipo-merienda { background: color-mix(in srgb, var(--text-dim) 15%, transparent); border-color: var(--text-dim); color: var(--text-dim); }
   .badge-dificultad-media { background: color-mix(in srgb, var(--danger) 15%, transparent); border-color: var(--danger); color: var(--danger); }
+  .badge-dificultad-elaborada { background: color-mix(in srgb, var(--purple) 15%, transparent); border-color: var(--purple); color: var(--purple); }
 
   .item[data-tipo="desayuno"] { border-left: 3px solid var(--warn); }
   .item[data-tipo="almuerzo"] { border-left: 3px solid var(--accent-2); }
   .item[data-tipo="cena"] { border-left: 3px solid var(--purple); }
   .item[data-tipo="snack"] { border-left: 3px solid var(--accent); }
+  .item[data-tipo="merienda"] { border-left: 3px solid var(--text-dim); }
 
   .empty { color: var(--text-dim); font-size: 0.85rem; padding: 0.5rem 0; }
 
@@ -390,6 +407,47 @@
 </div>
 
 <div class="tab-panel" data-panel="comidas">
+  <section class="card" id="card-plan-comidas">
+    <h2>
+      Plan de comidas
+      <button class="secondary" id="toggle-plan-comidas-form" type="button">🗓 Generar</button>
+    </h2>
+
+    <form id="form-plan-comidas" style="display:none; margin-bottom:0.75rem;">
+      <label>Fecha de inicio (lunes de esa semana)</label>
+      <input name="fechaInicio" type="date" required />
+
+      <label>Días que entrenás (agrega un snack de recuperación post-entreno)</label>
+      <div class="check-row" id="plan-dias-entreno-checks"></div>
+
+      <label>Comidas a incluir</label>
+      <div class="check-row" id="plan-tipos-checks"></div>
+
+      <label>Objetivo (opcional, separado por coma: musculo, definicion, energia, recuperacion...)</label>
+      <input name="objetivos" placeholder="definicion, musculo" />
+
+      <label>No repetir una receta en los últimos (días)</label>
+      <input name="ventanaDiasSinRepetir" type="number" min="0" max="90" value="21" />
+
+      <div class="row" style="margin-top:0.75rem;">
+        <button type="submit" class="primary">Generar plan</button>
+        <button type="button" class="secondary" id="btn-cancelar-plan-comidas">Cancelar</button>
+      </div>
+    </form>
+
+    <div class="row" id="plan-comidas-selector" style="display:none;">
+      <div>
+        <label>Plan generado</label>
+        <select id="select-plan-comidas"></select>
+      </div>
+      <div style="flex:0; align-self:end;">
+        <button type="button" class="danger" id="btn-borrar-plan-comidas" title="Borrar este plan">🗑</button>
+      </div>
+    </div>
+
+    <div id="plan-comidas-semanal"></div>
+  </section>
+
   <section class="card">
     <h2>
       Comidas fáciles y fit
@@ -408,9 +466,10 @@
           <label>Tipo</label>
           <select name="tipoComida">
             <option value="desayuno">Desayuno</option>
-            <option value="almuerzo">Almuerzo</option>
-            <option value="cena">Cena</option>
             <option value="snack">Snack</option>
+            <option value="almuerzo">Almuerzo</option>
+            <option value="merienda">Merienda</option>
+            <option value="cena">Cena</option>
           </select>
         </div>
         <div>
@@ -418,6 +477,7 @@
           <select name="dificultad">
             <option value="facil">Fácil</option>
             <option value="media">Media</option>
+            <option value="elaborada">Elaborada</option>
           </select>
         </div>
       </div>
@@ -447,6 +507,32 @@
       <label>Instrucciones</label>
       <textarea name="instrucciones" rows="3" required></textarea>
 
+      <div class="row">
+        <div>
+          <label>Objetivos (separados por coma)</label>
+          <input name="objetivos" placeholder="musculo, definicion" />
+        </div>
+        <div>
+          <label>Tags (separados por coma)</label>
+          <input name="tags" placeholder="pollo, rapido" />
+        </div>
+        <div>
+          <label>Costo</label>
+          <select name="costo">
+            <option value="bajo">Bajo</option>
+            <option value="medio" selected>Medio</option>
+            <option value="alto">Alto</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <label class="check-chip"><input type="checkbox" name="vegetariana" /> Vegetariana</label>
+        <label class="check-chip"><input type="checkbox" name="vegana" /> Vegana</label>
+        <label class="check-chip"><input type="checkbox" name="sinGluten" /> Sin gluten</label>
+        <label class="check-chip"><input type="checkbox" name="mealPrep" /> Meal prep</label>
+      </div>
+
       <label>Notas (opcional)</label>
       <input name="notas" maxlength="255" />
 
@@ -471,9 +557,10 @@
         <select id="filtro-tipo-comida">
           <option value="">Todas</option>
           <option value="desayuno">Desayuno</option>
-          <option value="almuerzo">Almuerzo</option>
-          <option value="cena">Cena</option>
           <option value="snack">Snack</option>
+          <option value="almuerzo">Almuerzo</option>
+          <option value="merienda">Merienda</option>
+          <option value="cena">Cena</option>
         </select>
       </div>
       <div>
@@ -1038,7 +1125,7 @@ async function mostrarResultadoEntrenar(id) {
 
 // ── Comidas ──────────────────────────────────────────
 
-const TIPO_COMIDA_LABEL = { desayuno: 'Desayuno', almuerzo: 'Almuerzo', cena: 'Cena', snack: 'Snack' };
+const TIPO_COMIDA_LABEL = { desayuno: 'Desayuno', snack: 'Snack', almuerzo: 'Almuerzo', merienda: 'Merienda', cena: 'Cena' };
 const DIFICULTAD_LABEL = { facil: 'Fácil', media: 'Media' };
 
 function claseTiempo(min) {
@@ -1097,6 +1184,7 @@ async function mostrarRecetaDetalle(id) {
     card.style.display = 'block';
     $('#receta-detalle-titulo').textContent = receta.nombre;
     $('#receta-detalle-body').innerHTML = `
+      ${receta.descripcion ? `<p style="font-size:0.85rem; color:var(--text-dim); margin-top:-0.25rem;">${receta.descripcion}</p>` : ''}
       <p>
         <span class="badge badge-tipo-${receta.tipo_comida}">${TIPO_COMIDA_LABEL[receta.tipo_comida] ?? receta.tipo_comida}</span>
         <span class="badge ${claseTiempo(receta.tiempo_prep_min)}">⏱ ${receta.tiempo_prep_min} min</span>
@@ -1104,7 +1192,15 @@ async function mostrarRecetaDetalle(id) {
         ${receta.calorias_aprox ? `<span class="badge">${receta.calorias_aprox} kcal</span>` : ''}
         ${receta.proteina_aprox_g ? `<span class="badge">${receta.proteina_aprox_g} g prot</span>` : ''}
         <span class="badge">${receta.porciones} porción${receta.porciones > 1 ? 'es' : ''}</span>
+        ${receta.vegana ? `<span class="badge badge-dificultad-facil">Vegana</span>` : receta.vegetariana ? `<span class="badge badge-dificultad-facil">Vegetariana</span>` : ''}
+        ${receta.sin_gluten ? `<span class="badge">Sin gluten</span>` : ''}
+        ${receta.meal_prep ? `<span class="badge">Meal prep</span>` : ''}
       </p>
+      ${(receta.objetivos?.length || receta.tags?.length) ? `
+        <p style="margin-top:-0.5rem;">
+          ${(receta.objetivos ?? []).map(o => `<span class="badge badge-tipo-almuerzo">${o}</span>`).join('')}
+          ${(receta.tags ?? []).map(t => `<span class="badge">${t}</span>`).join('')}
+        </p>` : ''}
       <h3 style="font-size:0.85rem; margin: 1rem 0 0.5rem; color:var(--text-dim);">Ingredientes</h3>
       <ul class="list">
         ${receta.ingredientes.map(i => `
@@ -1176,6 +1272,13 @@ async function editarReceta(id) {
     form.instrucciones.value = receta.instrucciones;
     form.notas.value = receta.notas ?? '';
     form.ingredientes.value = ingredientesATexto(receta.ingredientes);
+    form.objetivos.value = (receta.objetivos ?? []).join(', ');
+    form.tags.value = (receta.tags ?? []).join(', ');
+    form.costo.value = receta.costo ?? 'medio';
+    form.vegetariana.checked = !!receta.vegetariana;
+    form.vegana.checked = !!receta.vegana;
+    form.sinGluten.checked = !!receta.sin_gluten;
+    form.mealPrep.checked = !!receta.meal_prep;
     editandoRecetaId = id;
     $('#btn-guardar-receta').textContent = 'Guardar cambios';
     abrirFormReceta();
@@ -1204,6 +1307,13 @@ $('#form-receta').addEventListener('submit', async (e) => {
     instrucciones: fd.get('instrucciones'),
     notas: fd.get('notas') || undefined,
     ingredientes,
+    objetivos: (fd.get('objetivos') || '').split(',').map(o => o.trim()).filter(Boolean),
+    tags: (fd.get('tags') || '').split(',').map(t => t.trim()).filter(Boolean),
+    costo: fd.get('costo'),
+    vegetariana: fd.get('vegetariana') === 'on',
+    vegana: fd.get('vegana') === 'on',
+    sinGluten: fd.get('sinGluten') === 'on',
+    mealPrep: fd.get('mealPrep') === 'on',
   };
   try {
     if (editandoRecetaId) {
@@ -1298,6 +1408,149 @@ $('#filtro-tipo-comida').addEventListener('change', cargarRecetas);
 $('#filtro-tiempo-comida').addEventListener('change', cargarRecetas);
 $('#filtro-dificultad-comida').addEventListener('change', cargarRecetas);
 
+// ── Plan de comidas (selector automático, no inventa recetas) ────
+
+const TIPOS_COMIDA_PLAN = ['desayuno', 'snack', 'almuerzo', 'merienda', 'cena'];
+
+function renderChecks(contenedorId, valores, labels, todosMarcados) {
+  $(`#${contenedorId}`).innerHTML = valores.map(v => `
+    <label class="check-chip">
+      <input type="checkbox" value="${v}" ${todosMarcados ? 'checked' : ''} />
+      ${labels ? labels[v] : v}
+    </label>
+  `).join('');
+}
+
+function checksMarcados(contenedorId) {
+  return [...document.querySelectorAll(`#${contenedorId} input:checked`)].map(i => i.value);
+}
+
+renderChecks('plan-dias-entreno-checks', DIAS, DIAS_LABEL, false);
+renderChecks('plan-tipos-checks', TIPOS_COMIDA_PLAN, TIPO_COMIDA_LABEL, true);
+
+$('#toggle-plan-comidas-form').addEventListener('click', () => {
+  const form = $('#form-plan-comidas');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+});
+
+$('#btn-cancelar-plan-comidas').addEventListener('click', () => {
+  $('#form-plan-comidas').style.display = 'none';
+});
+
+let planComidaActual = null;
+
+async function cargarPlanesComida() {
+  const planes = await api('/planes-comida');
+  const select = $('#select-plan-comidas');
+  const selector = $('#plan-comidas-selector');
+
+  if (!planes.length) {
+    selector.style.display = 'none';
+    $('#plan-comidas-semanal').innerHTML = '<p class="empty">Todavía no generaste ningún plan de comidas.</p>';
+    return;
+  }
+  selector.style.display = 'flex';
+  select.innerHTML = planes.map(p => `<option value="${p.id}">#${p.id} · semana del ${p.fecha_inicio.slice(0, 10)}</option>`).join('');
+  await mostrarPlanComida(select.value);
+}
+
+async function mostrarPlanComida(planId) {
+  if (!planId) return;
+  planComidaActual = Number(planId);
+  const plan = await api(`/planes-comida/${planId}`);
+  const porDia = new Map();
+  for (const c of plan.comidas) {
+    const lista = porDia.get(c.dia_semana) ?? [];
+    lista.push(c);
+    porDia.set(c.dia_semana, lista);
+  }
+
+  $('#plan-comidas-semanal').innerHTML = DIAS.map(dia => {
+    const comidasDelDia = porDia.get(dia) ?? [];
+    if (!comidasDelDia.length) {
+      return `
+        <div class="dia-block">
+          <div class="dia-header"><span>${DIAS_LABEL[dia]}</span></div>
+          <div class="dia-descanso">Sin comidas planificadas</div>
+        </div>`;
+    }
+    return `
+      <div class="dia-block">
+        <div class="dia-header"><span>${DIAS_LABEL[dia]}</span></div>
+        <ul class="list" style="padding: 0.5rem 0.75rem;">
+          ${comidasDelDia.map(c => `
+            <li class="item" data-receta-id="${c.receta_id}" data-tipo="${c.tipo_comida}">
+              <div>
+                <strong>${c.nombre}</strong>
+                <span class="meta"><span class="badge badge-tipo-${c.tipo_comida}">${TIPO_COMIDA_LABEL[c.tipo_comida] ?? c.tipo_comida}</span></span>
+              </div>
+              <span class="sesion-info">
+                <span class="badge ${claseTiempo(c.tiempo_prep_min)}">⏱ ${c.tiempo_prep_min} min</span>
+                ${c.calorias_aprox ? `<span class="badge">${c.calorias_aprox} kcal</span>` : ''}
+              </span>
+            </li>`).join('')}
+        </ul>
+      </div>`;
+  }).join('');
+}
+
+$('#form-plan-comidas').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const diasEntreno = checksMarcados('plan-dias-entreno-checks');
+  const comidas = checksMarcados('plan-tipos-checks');
+  if (!comidas.length) {
+    showToast('Elegí al menos una comida', true);
+    return;
+  }
+  const objetivos = (fd.get('objetivos') || '').split(',').map(o => o.trim()).filter(Boolean);
+
+  try {
+    const resultado = await api('/planes-comida', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fechaInicio: fd.get('fechaInicio'),
+        dias: DIAS,
+        comidas,
+        objetivos,
+        diasEntreno,
+        ventanaDiasSinRepetir: Number(fd.get('ventanaDiasSinRepetir')) || 21,
+      }),
+    });
+    showToast(resultado.sinAsignar.length
+      ? `Plan generado, pero faltaron ${resultado.sinAsignar.length} comidas (todavía no hay recetas suficientes para eso)`
+      : 'Plan generado');
+    $('#form-plan-comidas').style.display = 'none';
+    await cargarPlanesComida();
+    $('#select-plan-comidas').value = resultado.planId;
+    await mostrarPlanComida(resultado.planId);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+$('#select-plan-comidas').addEventListener('change', (e) => mostrarPlanComida(e.target.value));
+
+$('#btn-borrar-plan-comidas').addEventListener('click', async () => {
+  if (!planComidaActual) return;
+  if (!confirm('¿Borrar este plan de comidas?')) return;
+  try {
+    await api(`/planes-comida/${planComidaActual}`, { method: 'DELETE' });
+    showToast('Plan borrado');
+    planComidaActual = null;
+    await cargarPlanesComida();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
+$('#plan-comidas-semanal').addEventListener('click', (e) => {
+  const item = e.target.closest('.item');
+  if (!item) return;
+  mostrarRecetaDetalle(item.dataset.recetaId);
+});
+
 // ── Tabs ─────────────────────────────────────────────
 
 document.querySelectorAll('nav.tabs button').forEach(btn => {
@@ -1314,12 +1567,19 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
 const DIA_POR_JS_DAY = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
 $('#select-entrenar-dia').value = DIA_POR_JS_DAY[new Date().getDay()];
 
+const hoy = new Date();
+const diasHastaLunes = (8 - hoy.getDay()) % 7 || 7;
+const proximoLunes = new Date(hoy);
+proximoLunes.setDate(hoy.getDate() + diasHastaLunes);
+$('#form-plan-comidas [name="fechaInicio"]').value = proximoLunes.toISOString().slice(0, 10);
+
 (async function init() {
   try {
     renderObjetivos();
     await cargarCatalogoEjercicios();
     await cargarBloques();
     await cargarRecetas();
+    await cargarPlanesComida();
     if (bloquesCache.length) {
       const primerBloqueId = Math.min(...bloquesCache.map(b => b.id));
       $('#select-plan-bloque').value = primerBloqueId;

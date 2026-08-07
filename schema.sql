@@ -65,12 +65,22 @@ CREATE TABLE sesion_ejercicios (
 CREATE TABLE recetas (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL UNIQUE,
-  tipo_comida ENUM('desayuno','almuerzo','cena','snack') NOT NULL,
+  descripcion VARCHAR(255) NULL,
+  tipo_comida ENUM('desayuno','snack','almuerzo','merienda','cena') NOT NULL,
   tiempo_prep_min TINYINT NOT NULL,
   porciones TINYINT NOT NULL DEFAULT 1,
-  dificultad ENUM('facil','media') NOT NULL DEFAULT 'facil',
+  dificultad ENUM('facil','media','elaborada') NOT NULL DEFAULT 'facil',
   calorias_aprox SMALLINT NULL,
   proteina_aprox_g SMALLINT NULL,
+  carbohidratos_g SMALLINT NULL,
+  grasas_g SMALLINT NULL,
+  fibra_g SMALLINT NULL,
+  vegetariana BOOLEAN NOT NULL DEFAULT FALSE,
+  vegana BOOLEAN NOT NULL DEFAULT FALSE,
+  sin_gluten BOOLEAN NOT NULL DEFAULT FALSE,
+  meal_prep BOOLEAN NOT NULL DEFAULT FALSE,
+  congelable BOOLEAN NOT NULL DEFAULT FALSE,
+  costo ENUM('bajo','medio','alto') NOT NULL DEFAULT 'medio',
   instrucciones TEXT NOT NULL,
   notas VARCHAR(255) NULL,
   INDEX idx_tipo_comida (tipo_comida)
@@ -88,6 +98,66 @@ CREATE TABLE receta_ingredientes (
   cantidad VARCHAR(40) NULL,
   FOREIGN KEY (receta_id) REFERENCES recetas(id) ON DELETE CASCADE,
   FOREIGN KEY (ingrediente_id) REFERENCES ingredientes_comida(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Objetivo (musculo, definicion, potencia...) y tag libre (pollo, wok,
+-- rapido...) son catálogos dinámicos: se crean sobre la marcha igual que
+-- ingredientes_comida, no hace falta precargarlos.
+CREATE TABLE objetivos_comida (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(60) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE receta_objetivos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  receta_id INT NOT NULL,
+  objetivo_id INT NOT NULL,
+  FOREIGN KEY (receta_id) REFERENCES recetas(id) ON DELETE CASCADE,
+  FOREIGN KEY (objetivo_id) REFERENCES objetivos_comida(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_receta_objetivo (receta_id, objetivo_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE tags_comida (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(60) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE receta_tags (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  receta_id INT NOT NULL,
+  tag_id INT NOT NULL,
+  FOREIGN KEY (receta_id) REFERENCES recetas(id) ON DELETE CASCADE,
+  FOREIGN KEY (tag_id) REFERENCES tags_comida(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_receta_tag (receta_id, tag_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Registra cada vez que una receta entra en un plan generado, para poder
+-- evitar de verdad "no repetir en los últimos N días" (a diferencia de
+-- veces_usado en ejercicios, que es un contador global sin fecha).
+CREATE TABLE receta_usos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  receta_id INT NOT NULL,
+  fecha DATE NOT NULL,
+  FOREIGN KEY (receta_id) REFERENCES recetas(id) ON DELETE CASCADE,
+  INDEX idx_receta_fecha (receta_id, fecha)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE planes_comida (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  fecha_inicio DATE NOT NULL,
+  notas VARCHAR(255) NULL,
+  fecha_creado DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE plan_comidas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  plan_id INT NOT NULL,
+  dia_semana ENUM('lunes','martes','miercoles','jueves','viernes','sabado','domingo') NOT NULL,
+  tipo_comida ENUM('desayuno','snack','almuerzo','merienda','cena') NOT NULL,
+  receta_id INT NOT NULL,
+  FOREIGN KEY (plan_id) REFERENCES planes_comida(id) ON DELETE CASCADE,
+  FOREIGN KEY (receta_id) REFERENCES recetas(id),
+  UNIQUE KEY uq_plan_dia_tipo (plan_id, dia_semana, tipo_comida)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE historial_entrenamientos (
